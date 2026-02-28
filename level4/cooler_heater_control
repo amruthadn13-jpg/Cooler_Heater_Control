@@ -1,0 +1,81 @@
+#include <DHTesp.h>
+#include <ESP32Servo.h>
+
+#define SERVO_PIN 19    
+#define RELAY_PIN 18     
+#define DHT_PIN   12     
+
+#define HIGH_LIMIT 25    
+#define LOW_LIMIT  20    
+
+Servo coolerServo;
+DHTesp dht;
+
+void setup() {
+
+  Serial.begin(115200);
+
+  coolerServo.attach(SERVO_PIN);
+  pinMode(RELAY_PIN, OUTPUT);
+
+  dht.setup(DHT_PIN, DHTesp::DHT22);
+
+
+  coolerServo.write(0);         
+  digitalWrite(RELAY_PIN, LOW); 
+}
+
+void loop() {
+
+  TempAndHumidity data = dht.getTempAndHumidity();
+
+  float temp = data.temperature;
+  float hum  = data.humidity;
+
+  if (isnan(temp) || isnan(hum)) {
+    Serial.println("Failed to read from DHT sensor");
+    delay(2000);
+    return;
+  }
+
+  Serial.print("Temperature: ");
+  Serial.print(temp);
+  Serial.print(" °C , ");
+
+  Serial.print("Humidity: ");
+  Serial.print(hum);
+  Serial.println(" %");
+
+  
+
+  if (temp >25) {
+
+ 
+    coolerServo.write(90);
+    digitalWrite(RELAY_PIN, LOW);
+
+    Serial.println("Status: COOLER ON , HEATER OFF");
+
+  }
+  else if (hum <20) {
+
+    
+    coolerServo.write(0);
+    digitalWrite(RELAY_PIN, HIGH);
+
+    Serial.println("Status: COOLER OFF , HEATER ON");
+
+  }
+  else {
+
+    
+    coolerServo.write(0);
+    digitalWrite(RELAY_PIN, LOW);
+
+    Serial.println("Status: COOLER OFF , HEATER OFF");
+  }
+
+  Serial.println("---------------------------------");
+
+  delay(2000);
+}
